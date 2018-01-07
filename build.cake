@@ -1,100 +1,107 @@
-#addin "nuget:https://www.nuget.org/api/v2?package=Newtonsoft.Json&version=9.0.1"
-
-#load "./build/index.cake"
+#tool "nuget:?package=GitReleaseNotes"
+#tool "nuget:?package=GitVersion.CommandLine"
+#tool "nuget:?package=gitlink"
 
 var target = Argument("target", "Default");
-
-var build = BuildParameters.Create(Context);
-var util = new Util(Context, build);
+var outputDir = "./artifacts/";
+var solutionPath = "./DotNetServer.sln";
 
 Task("Clean")
-	.Does(() =>
-{
-	if (DirectoryExists("./artifacts"))
-	{
-		DeleteDirectory("./artifacts", true);
-	}
-});
+    .Does(() => {
+        if (DirectoryExists(outputDir))
+        {
+            DeleteDirectory(outputDir, recursive:true);
+        }
+        CreateDirectory(outputDir);
+    });
 
 Task("Restore")
-	.IsDependentOn("Clean")
-	.Does(() =>
-{
-	var settings = new DotNetCoreRestoreSettings
-	{
-		ArgumentCustomization = args =>
-		{
-			args.Append($"/p:VersionSuffix={build.Version.Suffix}");
-			return args;
-		}
-	};
-	DotNetCoreRestore(settings);
-});
+    .Does(() => {
+        DotNetCoreRestore(".");
+    });
+
+GitVersion versionInfo = null;
+Task("Version")
+    .Does(() => {
+        GitVersion(new GitVersionSettings{
+            UpdateAssemblyInfo = true,
+            OutputType = GitVersionOutput.BuildServer
+        });
+        versionInfo = GitVersion(new GitVersionSettings{ OutputType = GitVersionOutput.Json });
+
+		var file = "./src/DotNetServer.Core.cs";
+		CreateAssemblyInfo(file, new AssemblyInfoSettings {
+			Product = "DotNetServer.Core",
+			Version = versionInfo.NuGetVersionV2,
+			FileVersion = versionInfo.AssemblySemFileVer,
+			InformationalVersion = versionInfo.InformationalVersion,
+			Copyright = string.Format("Copyright (c) Contoso 2017 - {0}", DateTime.Now.Year)
+		});
+    });
 
 Task("Build")
-	.IsDependentOn("Restore")
-	.Does(() =>
-{
-	var settings = new DotNetCoreBuildSettings
-	{
-		Configuration = build.Configuration,
-		VersionSuffix = build.Version.Suffix,
-		ArgumentCustomization = args =>
-		{
-			args.Append($"/p:InformationalVersion={build.Version.VersionWithSuffix()}");
-			return args;
-		}
-	};
-	foreach (var project in build.ProjectFiles)
-	{
-		DotNetCoreBuild(project.FullPath, settings);
-	}
-});
+    .IsDependentOn("Clean")
+    .IsDependentOn("Version")
+    .IsDependentOn("Restore")
+    .Does(() => {
+        MSBuild(solutionPath);
+    });
 
 Task("Test")
-	.IsDependentOn("Build")
-	.Does(() =>
-{
-	foreach (var testProject in build.TestProjectFiles)
-	{
-		DotNetCoreTest(testProject.FullPath);
-	}
-});
+    .IsDependentOn("Build")
+    .Does(() => {
+        DotNetCoreTest("./test/DotNetServer.Core.Test");
+    });
 
-Task("Pack")
-	.Does(() =>
+Task("Package")
+    .IsDependentOn("Test")
+    .Does(() => {
+        GenerateReleaseNotes();
+
+        if (AppVeyor.IsRunningOnAppVeyor)
+        {
+            foreach (var file in GetFiles(outputDir + "**/*"))
+            {
+                AppVeyor.UploadArtifact(file.FullPath);
+            }
+        }
+    });
+
+private void PackageProject(string projectName, string projectJsonPath)
 {
-	var settings = new DotNetCorePackSettings
-	{
-		Configuration = build.Configuration,
-		VersionSuffix = build.Version.Suffix,
-		OutputDirectory = "./artifacts/packages"
-	};
-	foreach (var project in build.ProjectFiles)
-	{
-		DotNetCorePack(project.FullPath, settings);
-	}
-});
+    var settings = new DotNetCorePackSettings
+        {
+            OutputDirectory = outputDir,
+            NoBuild = true
+        };
+
+    DotNetCorePack(projectJsonPath, settings);
+
+    System.IO.File.WriteAllLines(outputDir + "artifacts", new[]{
+        "nuget:" + projectName + "." + versionInfo.NuGetVersion + ".nupkg",
+        "nugetSymbols:" + projectName + "." + versionInfo.NuGetVersion + ".symbols.nupkg",
+        "releaseNotes:releasenotes.md"
+    });
+}
+
+private void GenerateReleaseNotes()
+{
+    var releaseNotesExitCode = StartProcess(
+        @"./tools/GitReleaseNotes/GitReleaseNotes/tools/gitreleasenotes.exe", 
+        new ProcessSettings { Arguments = ". /o artifacts/releasenotes.md" });
+
+    if (string.IsNullOrEmpty(System.IO.File.ReadAllText("./artifacts/releasenotes.md")))
+    {
+        System.IO.File.WriteAllText("./artifacts/releasenotes.md", "No issues closed since last release");
+    }
+
+    if (releaseNotesExitCode != 0)
+    {
+        throw new Exception("Failed to generate release notes");
+    }
+}
 
 Task("Default")
-	.IsDependentOn("Build")
-	.IsDependentOn("Test")
-	.IsDependentOn("Pack")
-	.Does(() =>
-{
-	util.PrintInfo();
-});
-
-Task("Version")
-	.Does(() =>
-{
-	Information($"{build.FullVersion()}");
-});
-
-Task("Print")
-	.Does(() =>
-{
-	util.PrintInfo();
-});
+    .IsDependentOn("Package");
 
 RunTarget(target);

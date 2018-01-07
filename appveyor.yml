@@ -1,5 +1,10 @@
 version: 1.0.{build}
 image: Visual Studio 2017
+environment:
+  matrix:
+    - CLI_VERSION: 2.0.0
+    - CLI_VERSION: 2.0.3
+    - CLI_VERSION: Latest
 dotnet_csproj:
   patch: true
   file: '**\*.csproj'
