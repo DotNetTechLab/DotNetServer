@@ -86,9 +86,9 @@ private void PackageProject(string projectName, string projectJsonPath)
 
 private void GenerateReleaseNotes()
 {
-    var releaseNotesExitCode = StartProcess(
-        @"./tools/GitReleaseNotes/GitReleaseNotes/tools/gitreleasenotes.exe", 
-        new ProcessSettings { Arguments = ". /o artifacts/releasenotes.md" });
+    GitReleaseNotes("./artifacts/releasenotes.md", new GitReleaseNotesSettings(){
+        WorkingDirectory = "."
+    });
 
     if (string.IsNullOrEmpty(System.IO.File.ReadAllText("./artifacts/releasenotes.md")))
     {

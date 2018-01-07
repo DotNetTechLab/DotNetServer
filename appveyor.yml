@@ -14,7 +14,7 @@ dotnet_csproj:
   file_version: '{version}'
   informational_version: '{version}'
 build_script:
-  - ps: ./build.ps1
+  - ps: ./build.ps1 verbosity=diagnostic
 test: off
 artifacts:
   - path: artifacts/packages/*.nupkg

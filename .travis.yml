@@ -45,4 +45,3 @@ before_script:
   - chmod a+x ./build.sh
 script:
   - ./build.sh --verbosity diagnostic
-
