@@ -18,7 +18,7 @@ env:
     - CLI_VERSION=2.0.0
     - CLI_VERSION=2.0.3
 
-addons:  
+addons:
   apt:
     packages:
     - gettext
@@ -29,7 +29,7 @@ addons:
     - zlib1g
 
 mono:
-  - 4.2.3
+  - latest
 
 # Make sure build dependencies are installed.
 before_install:  
