@@ -94,11 +94,6 @@ private void GenerateReleaseNotes()
     {
         System.IO.File.WriteAllText("./artifacts/releasenotes.md", "No issues closed since last release");
     }
-
-    if (releaseNotesExitCode != 0)
-    {
-        throw new Exception("Failed to generate release notes");
-    }
 }
 
 Task("Default")
