@@ -44,4 +44,5 @@ install:
 before_script:
   - chmod a+x ./build.sh
 script:
-  - ./build.sh
+  - ./build.sh --verbosity diagnostic
+
