@@ -90,10 +90,10 @@ private void GenerateReleaseNotes()
     //     WorkingDirectory = "."
     // });
 
-    if (string.IsNullOrEmpty(System.IO.File.ReadAllText("./artifacts/releasenotes.md")))
-    {
-        System.IO.File.WriteAllText("./artifacts/releasenotes.md", "No issues closed since last release");
-    }
+    // if (string.IsNullOrEmpty(System.IO.File.ReadAllText("./artifacts/releasenotes.md")))
+    // {
+    //     System.IO.File.WriteAllText("./artifacts/releasenotes.md", "No issues closed since last release");
+    // }
 }
 
 Task("Default")
