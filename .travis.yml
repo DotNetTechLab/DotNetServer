@@ -9,13 +9,15 @@ matrix:
     sudo: required
   - os: osx
     osx_image: xcode8.3 # macOS 10.12
-    
-env:  
+
+env:
   global:
     - DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
     - DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  matrix:
     - CLI_VERSION=2.0.0
-  
+    - CLI_VERSION=2.0.3
+
 addons:  
   apt:
     packages:
@@ -36,5 +38,7 @@ install:
   - travis_retry curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 2.0 --version "$CLI_VERSION" --install-dir "$DOTNET_INSTALL_DIR"
 
 # Run the build script
+before_script:
+  - chmod a+x ./build.sh
 script:
   - ./build.sh
