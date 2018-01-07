@@ -1,6 +1,10 @@
 #tool "nuget:?package=GitReleaseNotes"
 #tool "nuget:?package=GitVersion.CommandLine"
 #tool "nuget:?package=gitlink"
+// #tool "nuget:?package=OpenCover"
+// #tool "nuget:?package=coveralls.net"
+// #tool "nuget:?package=coveralls.io"
+// #tool "nuget:?package=xunit.runner.console"
 
 var target = Argument("target", "Default");
 var outputDir = "./artifacts/";
@@ -35,7 +39,7 @@ Task("Version")
 			Version = versionInfo.NuGetVersionV2,
 			FileVersion = versionInfo.AssemblySemFileVer,
 			InformationalVersion = versionInfo.InformationalVersion,
-			Copyright = string.Format("Copyright (c) Contoso 2017 - {0}", DateTime.Now.Year)
+			Copyright = "Copyright (c) Contoso 2017 - " + DateTime.Now.Year
 		});
     });
 
@@ -51,6 +55,31 @@ Task("Test")
     .IsDependentOn("Build")
     .Does(() => {
         DotNetCoreTest("./test/DotNetServer.Core.Test");
+
+        // var coverageFile = outputDir + "coverage.xml";
+        // OpenCover(tool => {
+        //         tool.XUnit2("./test/**/DotNetServer.Core.Test.dll",
+        //             new XUnit2Settings {
+        //                 ShadowCopy = false
+        //         });
+        //     },
+        //     new FilePath(coverageFile),
+        //     new OpenCoverSettings()
+        //     {
+        //         Register = "user"
+        //     }
+        //         // .WithFilter("+[App]*")
+        //         // .WithFilter("-[App.Tests]*")
+        // );
+
+        // CoverallsNet(coverageFile,
+        //     CoverallsNetReportType.OpenCover,
+        //     new CoverallsNetSettings()
+        //     {
+        //         RepoToken = "VaPwRsSctPPDRR5PufXzRJIT6nfylHc6t"
+        //     }
+        // );
+
     });
 
 Task("Package")
@@ -86,19 +115,14 @@ private void PackageProject(string projectName, string projectJsonPath)
 
 private void GenerateReleaseNotes()
 {
-    var releaseNotesExitCode = StartProcess(
-        @"./tools/GitReleaseNotes/GitReleaseNotes/tools/gitreleasenotes.exe", 
-        new ProcessSettings { Arguments = ". /o artifacts/releasenotes.md" });
+    // GitReleaseNotes("./artifacts/releasenotes.md", new GitReleaseNotesSettings(){
+    //     WorkingDirectory = "."
+    // });
 
-    if (string.IsNullOrEmpty(System.IO.File.ReadAllText("./artifacts/releasenotes.md")))
-    {
-        System.IO.File.WriteAllText("./artifacts/releasenotes.md", "No issues closed since last release");
-    }
-
-    if (releaseNotesExitCode != 0)
-    {
-        throw new Exception("Failed to generate release notes");
-    }
+    // if (string.IsNullOrEmpty(System.IO.File.ReadAllText("./artifacts/releasenotes.md")))
+    // {
+    //     System.IO.File.WriteAllText("./artifacts/releasenotes.md", "No issues closed since last release");
+    // }
 }
 
 Task("Default")
