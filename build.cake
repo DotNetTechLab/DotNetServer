@@ -35,7 +35,7 @@ Task("Version")
 			Version = versionInfo.NuGetVersionV2,
 			FileVersion = versionInfo.AssemblySemFileVer,
 			InformationalVersion = versionInfo.InformationalVersion,
-			Copyright = string.Format("Copyright (c) Contoso 2017 - {0}", DateTime.Now.Year)
+			Copyright = "Copyright (c) Contoso 2017 - " + DateTime.Now.Year
 		});
     });
 
