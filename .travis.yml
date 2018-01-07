@@ -29,7 +29,7 @@ addons:
     - zlib1g
 
 mono:
-  - latest
+  - 5.4.1
 
 # Make sure build dependencies are installed.
 before_install:  
