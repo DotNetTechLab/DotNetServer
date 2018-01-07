@@ -86,9 +86,9 @@ private void PackageProject(string projectName, string projectJsonPath)
 
 private void GenerateReleaseNotes()
 {
-    GitReleaseNotes("./artifacts/releasenotes.md", new GitReleaseNotesSettings(){
-        WorkingDirectory = "."
-    });
+    // GitReleaseNotes("./artifacts/releasenotes.md", new GitReleaseNotesSettings(){
+    //     WorkingDirectory = "."
+    // });
 
     if (string.IsNullOrEmpty(System.IO.File.ReadAllText("./artifacts/releasenotes.md")))
     {
